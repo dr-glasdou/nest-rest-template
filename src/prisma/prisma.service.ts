@@ -10,7 +10,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
-    const pool = new Pool({ connectionString: envs.databaseUrl });
+    const pool = new Pool({ connectionString: envs.pg.url });
     const adapter = new PrismaPg(pool);
     super({ adapter, log: ['info', 'warn', 'error'] });
   }
@@ -19,15 +19,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     try {
       await this.$connect();
       await this.$queryRaw`SELECT 1`;
-      this.logger.log('✅ Connected to the database');
+      this.logger.log('Connected to the database');
     } catch (error) {
-      this.logger.error('❌ Failed to connect to the database', error);
+      this.logger.error('Failed to connect to the database', error);
       throw error;
     }
   }
 
   async onModuleDestroy() {
     await this.$disconnect();
-    this.logger.log('🔌 Disconnected from the database');
+    this.logger.log('Disconnected from the database');
   }
 }

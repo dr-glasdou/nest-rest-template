@@ -1,12 +1,12 @@
 services:
-  todo_api_name:
+  rest_api_name:
     build:
       context: .
       dockerfile: dockerfile.prod
-    image: drglasdou/todo_api:${APP_VERSION:-1.0.0}
+    image: drglasdou/rest_api:${APP_VERSION:-1.0.0}
 
-  todo_api_latest:
+  rest_api_latest:
     build:
       context: .
       dockerfile: dockerfile.prod
-    image: drglasdou/todo_api:latest
+    image: drglasdou/rest_api:latest

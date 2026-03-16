@@ -1,7 +1,7 @@
 services:
-  todo_api:
-    container_name: todo_api
-    image: drglasdou/todo_api:latest
+  rest_api:
+    container_name: rest_api
+    image: drglasdou/rest_api:latest
     build:
       context: .
       dockerfile: dockerfile.prod
@@ -11,20 +11,23 @@ services:
     environment:
       PORT: ${PORT:-4000}
       STAGE: ${STAGE:-prod}
-      DATABASE_URL: postgres://${PG_USER:-postgres}:${PG_PASSWORD:-Abcd@1234}@todo_api_pg:5432/${PG_DB:-todo_api_db}
-      GRAPHQL_INTROSPECTION: true
+      PG_USER: ${PG_USER:-postgres}
+      PG_PASSWORD: ${PG_PASSWORD:-Abcd@1234}
+      PG_DB: ${PG_DB:-rest_api_db}
+      PG_HOST: ${PG_HOST:-rest_api_pg}
+      PG_PORT: ${PG_PORT:-5432}
     ports:
       - '4000:4000'
     depends_on:
-      todo_api_pg:
+      rest_api_pg:
         condition: service_healthy
     networks:
-      - todo_api_network
+      - rest_api_network
     healthcheck:
       test:
         [
           'CMD-SHELL',
-          'curl -f -X POST -H "Content-Type: application/json" -d ''{"query":"query HealthCheck { healthCheck { message } }"}'' http://localhost:4000/v1/gql || exit 1',
+          'curl -f http://localhost:4000/v1/health || exit 1',
         ]
       interval: 30s
       timeout: 10s

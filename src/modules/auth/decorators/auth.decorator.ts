@@ -1,6 +1,6 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '../guards';
+import { UnifiedAuthGuard } from '../guards/unified-auth.guard';
 
 export function Auth(/* ...roles: Role[] */) {
-  return applyDecorators(UseGuards(AuthGuard));
+  return applyDecorators(UseGuards(UnifiedAuthGuard));
 }

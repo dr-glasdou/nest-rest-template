@@ -1,6 +1,6 @@
 services:
-  todo_api_pg:
-    container_name: todo_api_pg
+  rest_api_pg:
+    container_name: rest_api_pg
     image: postgres:17.6
     restart: always
     volumes:
@@ -10,19 +10,19 @@ services:
     environment:
       POSTGRES_USER: ${PG_USER:-postgres}
       POSTGRES_PASSWORD: ${PG_PASSWORD:-Abcd@1234}
-      POSTGRES_DB: ${PG_DB:-todo_api_db}
+      POSTGRES_DB: ${PG_DB:-rest}
     ports:
       - '5432:5432'
     networks:
-      - todo_api_network
+      - rest_api_network
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${PG_USER}']
       interval: 10s
       timeout: 5s
       retries: 5
 
-  todo_api_pgadmin:
-    container_name: todo_api_pgadmin
+  rest_api_pgadmin:
+    container_name: rest_api_pgadmin
     image: dpage/pgadmin4
     restart: always
     env_file:
@@ -33,19 +33,33 @@ services:
     ports:
       - '5050:80'
     depends_on:
-      todo_api_pg:
+      rest_api_pg:
         condition: service_healthy
     networks:
-      - todo_api_network
+      - rest_api_network
     healthcheck:
       test: ['CMD-SHELL', 'curl -f http://localhost/ || exit 1']
       interval: 30s
       timeout: 10s
       retries: 5
 
+  rest_api_redis:
+    container_name: rest_api_redis
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    networks:
+      - rest_api_network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   pg_data:
 
 networks:
-  todo_api_network:
+  rest_api_network:
     driver: bridge

@@ -32,8 +32,21 @@ docker-run-prod: ## Run the application with Docker Compose (production)
 docker-stop: ## Stop all Docker containers
 	docker-compose -f compose.yml -f compose.prod.yml down -v
 
+docker-clean: ## Clean up Docker resources (containers, networks, volumes)
+	docker-compose -f compose.yml -f compose.prod.yml down -v --rmi local --remove-orphans
+
 docker-logs: ## Show Docker container logs (development)
 	docker-compose -f compose.yml logs -f
 
 docker-logs-prod: ## Show production Docker container logs
 	docker-compose -f compose.yml -f compose.prod.yml logs -f
+
+db-migrate: ## Run database migrations
+	pnpm prisma migrate dev
+
+db-seed: ## Seed the database
+	pnpm prisma db seed
+
+db-setup: ## Set up the database (migrate and seed)
+	pnpm prisma migrate dev
+	pnpm prisma db seed
