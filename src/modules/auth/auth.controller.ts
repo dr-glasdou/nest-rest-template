@@ -35,6 +35,7 @@ export class AuthController {
     return this.authService.loginWithJwt(loginDto);
   }
 
+  @Auth()
   @Post('logout')
   async logout(@Req() req: Request, @Session() session: IronSession<IronSessionData>): Promise<{ message: string }> {
     const authType = req.authType;
@@ -45,8 +46,7 @@ export class AuthController {
     }
 
     const jti = req.jti;
-    if (!jti)
-      throw new BadRequestException({ status: HttpStatus.INTERNAL_SERVER_ERROR, message: 'No JTI found in request' });
+    if (!jti) throw new BadRequestException({ status: HttpStatus.BAD_REQUEST, message: 'No JTI found in request' });
 
     const token = req.headers.authorization?.substring(7) || '';
     const payload = await this.jwtService.verifyAsync(token, { secret: envs.jwt.secret });
