@@ -1,109 +1,55 @@
-# Builder stage - compiles the TypeScript application
+# Builder stage
 FROM node:24-alpine AS builder
 
 WORKDIR /usr/src/app
 
-# Enable corepack and install pnpm (more efficient than npm install -g)
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@9 --activate
 
-# Copy package files
 COPY package.json pnpm-lock.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
-# Install ALL dependencies (including dev dependencies needed for build)
-RUN pnpm install --frozen-lockfile
-
-# Copy source files and Prisma config
 COPY . .
 
-# Generate Prisma client for linux-musl platform (alpine/distroless compatible)
-# Output will be in generated/client (as per schema.prisma config)
-ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-arm64-openssl-3.0.x,linux-musl-openssl-3.0.x"
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    PRISMA_CLI_BINARY_TARGETS="linux-musl-arm64-openssl-3.0.x,linux-musl-openssl-3.0.x" \
+    pnpm prisma generate && \
+    pnpm run build && \
+    find ./src/prisma/generated -type f -name "*.node" ! -name "*linux-musl*" -delete 2>/dev/null || true
 
-RUN pnpm prisma generate && \
-  pnpm run build && \
-  # Remove non-linux engines from generated client
-  find ./src/prisma/generated -type f -name "*.node" ! -name "*linux-musl*" -delete 2>/dev/null || true
-
-# Production dependencies stage - uses pnpm for space efficiency
+# Production deps stage (combined install + cleanup)
 FROM node:24-alpine AS deps
 
 WORKDIR /usr/src/app
 
-# Enable corepack and install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@9 --activate
 
-# Copy package files
 COPY package.json pnpm-lock.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --prod --no-frozen-lockfile --no-optional && \
+    rm -rf \
+    ./node_modules/prisma \
+    ./node_modules/@prisma/engines && \
+    find ./node_modules/@prisma/client -type f -name "*.node" ! -name "*linux-musl-*" -delete 2>/dev/null || true && \
+    find ./node_modules/.prisma/client -type f -name "*.node" ! -name "*linux-musl-*" -delete 2>/dev/null || true && \
+    # Remove bloat
+    find ./node_modules -type f \( -name "*.md" -o -name "*.map" -o -name "CHANGELOG*" -o -name "README*" -o -name "LICENSE*" -o -name "LICENCE*" -o -name "*.test.*" -o -name "*.spec.*" \) -delete && \
+    find ./node_modules -type d \( -name "__tests__" -o -name "example" -o -name "examples" -o -name "benchmark" -o -name "benchmarks" -o -name "docs" -o -name "doc" -o -name ".github" -o -name ".circleci" \) -exec rm -rf {} + 2>/dev/null || true
 
-# Install ONLY production dependencies with pnpm
-# Remove --shamefully-hoist and use --no-optional for better compatibility
-RUN pnpm install --prod --frozen-lockfile --no-optional && \
-  # Remove Prisma CLI first (not needed in production)
-  rm -rf ./node_modules/prisma && \
-  # Remove @prisma/engines directory (engines are bundled with client)
-  rm -rf ./node_modules/@prisma/engines && \
-  # Remove all Prisma engine binaries except the one we need
-  find ./node_modules/@prisma/client -type f -name "*.node" ! -name "*linux-musl-*" -delete 2>/dev/null || true && \
-  find ./node_modules/.prisma/client -type f -name "*.node" ! -name "*linux-musl-*" -delete 2>/dev/null || true
-
-# Cleanup stage - separate stage for aggressive cleanup to improve caching
-FROM deps AS deps-clean
-
-WORKDIR /usr/src/app
-
-RUN set -ex && \
-  # Remove documentation files (safe)
-  find ./node_modules -name "*.md" -type f -delete && \
-  find ./node_modules -name "CHANGELOG*" -type f -delete && \
-  find ./node_modules -name "README*" -type f -delete && \
-  find ./node_modules -name "LICENSE*" -type f -delete && \
-  find ./node_modules -name "LICENCE*" -type f -delete && \
-  # Remove source maps (safe)
-  find ./node_modules -name "*.map" -type f -delete && \
-  # Remove test files (safe)
-  find ./node_modules -name "*.test.*" -type f -delete && \
-  find ./node_modules -name "*.spec.*" -type f -delete && \
-  find ./node_modules -type d -name "__tests__" -exec rm -rf {} + 2>/dev/null || true && \
-  # Remove example directories (safe)
-  find ./node_modules -type d -name "example" -exec rm -rf {} + 2>/dev/null || true && \
-  find ./node_modules -type d -name "examples" -exec rm -rf {} + 2>/dev/null || true && \
-  # Remove benchmark directories (safe)
-  find ./node_modules -type d -name "benchmark" -exec rm -rf {} + 2>/dev/null || true && \
-  find ./node_modules -type d -name "benchmarks" -exec rm -rf {} + 2>/dev/null || true && \
-  # Remove documentation directories (safe)
-  find ./node_modules -type d -name "docs" -exec rm -rf {} + 2>/dev/null || true && \
-  find ./node_modules -type d -name "doc" -exec rm -rf {} + 2>/dev/null || true && \
-  # Remove CI/CD directories (safe)
-  find ./node_modules -type d -name ".github" -exec rm -rf {} + 2>/dev/null || true && \
-  find ./node_modules -type d -name ".circleci" -exec rm -rf {} + 2>/dev/null || true && \
-  # Clean pnpm cache and store
-  pnpm store prune 2>/dev/null || true && \
-  rm -rf /root/.local/share/pnpm /root/.pnpm-store /root/.cache /tmp/*
-
-# Final production image - minimal runtime environment using distroless
+# Final production image
 FROM gcr.io/distroless/nodejs24-debian12:nonroot AS production
 
 WORKDIR /usr/src/app
 
-# Copy cleaned production dependencies and built application
-COPY --from=deps-clean --chown=nonroot:nonroot /usr/src/app/node_modules ./node_modules
-COPY --from=builder --chown=nonroot:nonroot /usr/src/app/dist ./dist
-COPY --from=builder --chown=nonroot:nonroot /usr/src/app/package.json ./package.json
-COPY --from=builder --chown=nonroot:nonroot /usr/src/app/prisma.config.ts ./prisma.config.ts
+COPY --from=deps    --chown=nonroot:nonroot /usr/src/app/node_modules        ./node_modules
+COPY --from=builder --chown=nonroot:nonroot /usr/src/app/dist                ./dist
+COPY --from=builder --chown=nonroot:nonroot /usr/src/app/package.json        ./package.json
+COPY --from=builder --chown=nonroot:nonroot /usr/src/app/src/prisma          ./src/prisma
 
-# Copy Prisma schema from custom location
-COPY --from=builder --chown=nonroot:nonroot /usr/src/app/src/prisma ./src/prisma
-
-# Copy generated Prisma client from custom output location (place it under src/prisma to match tsconfig)
-COPY --from=builder --chown=nonroot:nonroot /usr/src/app/src/prisma/generated ./src/prisma/generated
-
-# Set production environment variables
 ENV NODE_ENV=production \
-  PORT=4000 \
-  TZ=America/Guatemala
+    PORT=4000 \
+    TZ=America/Guatemala
 
-# Expose port
 EXPOSE 4000
 
-# Start the application (distroless uses nonroot user by default)
 CMD ["dist/main.js"]
