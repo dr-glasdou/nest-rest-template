@@ -9,8 +9,6 @@ interface EnvVars {
   PG_DB: string;
   PG_HOST: string;
   PG_PORT: number;
-  PGADMIN_EMAIL: string;
-  PGADMIN_PASSWORD: string;
   SESSION_SECRET: string;
   SESSION_COOKIE_NAME: string;
   SESSION_COOKIE_MAX_AGE: number;
@@ -31,8 +29,6 @@ const envSchema = joi
     PG_PASSWORD: joi.string().required(),
     PG_DB: joi.string().required(),
     PG_HOST: joi.string().required(),
-    PGADMIN_EMAIL: joi.string().email().default('admin@example.com'),
-    PGADMIN_PASSWORD: joi.string().required().default('Abcd@1234'),
     SESSION_SECRET: joi.string().min(32).required(),
     SESSION_COOKIE_NAME: joi.string().default('todo_offline'),
     SESSION_COOKIE_MAX_AGE: joi.number().default(60 * 60 * 24 * 7),
@@ -82,8 +78,6 @@ export const envs = {
     host: envVars.PG_HOST,
     port: envVars.PG_PORT,
     url: `postgres://${encodedValues.pg.user}:${encodedValues.pg.pass}@${envVars.PG_HOST}:${envVars.PG_PORT}/${encodedValues.pg.db}`,
-    adminUser: envVars.PGADMIN_EMAIL,
-    adminPassword: envVars.PGADMIN_PASSWORD,
   },
   redis: {
     host: envVars.REDIS_HOST,

@@ -4,7 +4,7 @@ services:
     image: postgres:17.6
     restart: always
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - rest_pg_data:/var/lib/postgresql/data
     env_file:
       - .env
     environment:
@@ -12,53 +12,34 @@ services:
       POSTGRES_PASSWORD: ${PG_PASSWORD:-Abcd@1234}
       POSTGRES_DB: ${PG_DB:-rest}
     ports:
-      - '5432:5432'
+      - "5432:5432"
     networks:
       - rest_api_network
     healthcheck:
-      test: [ 'CMD-SHELL', 'pg_isready -U ${PG_USER}' ]
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER}"]
       interval: 10s
       timeout: 5s
-      retries: 5
-
-  rest_api_pgadmin:
-    container_name: rest_api_pgadmin
-    image: dpage/pgadmin4
-    restart: always
-    env_file:
-      - .env
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-Abcd@1234}
-    ports:
-      - '5050:80'
-    depends_on:
-      rest_api_pg:
-        condition: service_healthy
-    networks:
-      - rest_api_network
-    healthcheck:
-      test: [ 'CMD-SHELL', 'curl -f http://localhost/ || exit 1' ]
-      interval: 30s
-      timeout: 10s
       retries: 5
 
   rest_api_redis:
     container_name: rest_api_redis
     image: redis:7-alpine
     restart: always
+    volumes:
+      - rest_redis_data:/data
     ports:
-      - '6380:6379'
+      - "6379:6379"
     networks:
       - rest_api_network
     healthcheck:
-      test: [ 'CMD', 'redis-cli', 'ping' ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
-  pg_data:
+  rest_pg_data:
+  rest_redis_data:
 
 networks:
   rest_api_network:
