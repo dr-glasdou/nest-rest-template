@@ -1,7 +1,7 @@
 # NestJS GraphQL API Makefile
 # Simplified commands for running the project
 
-.PHONY: help dev debug prod docker-build docker-build-image docker-run docker-run-prod docker-stop docker-clean docker-logs docker-logs-prod db-migrate db-seed db-setup
+.PHONY: help dev debug prod docker-build docker-build-image docker-run docker-run-prod docker-stop docker-clean docker-logs docker-logs-prod db-migrate db-seed db-setup setup
 
 # Default target
 help: ## Show this help message
@@ -56,3 +56,10 @@ db-seed: ## Seed the database
 db-setup: ## Set up the database (migrate and seed)
 	pnpm prisma migrate dev
 	pnpm prisma db seed
+
+setup: ## Clean install (remove node_modules + lock file + reinstall)
+	@echo "⚠️  This will delete node_modules and pnpm-lock.yaml and reinstall all dependencies"
+	@sleep 3
+	rm -rf node_modules pnpm-lock.yaml
+	pnpm install
+	pnpm prisma generate

@@ -8,18 +8,23 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
     "sourceMap": true,
-    "outDir": "./dist",
     "baseUrl": "./",
+    "ignoreDeprecations": "6.0",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
+    "strictPropertyInitialization": false,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "prisma": ["./src/prisma/generated"],
-      "prisma/*": ["./src/prisma/generated/*"]
+      "prisma": [
+        "./src/prisma/generated"
+      ],
+      "prisma/*": [
+        "./src/prisma/generated/*"
+      ]
     },
     "typeRoots": [
       "./node_modules/@types",
@@ -27,5 +32,7 @@
     ],
     "types": []
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*"
+  ],
 }

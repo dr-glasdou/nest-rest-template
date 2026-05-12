@@ -1,10 +1,7 @@
-import { BadRequestException, Body, Controller, Get, HttpStatus, Post, Req, Session } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { Body, Controller, Get, Post, Req, Session } from '@nestjs/common';
 import { Request } from 'express';
 import { IronSession, IronSessionData } from 'iron-session';
 
-import { envs } from 'src/config';
-import { RedisService } from 'src/modules/redis';
 import { CreateUserDto } from '../user';
 import { AuthService } from './auth.service';
 import { Auth } from './decorators';
@@ -13,11 +10,7 @@ import { AuthResponse } from './interfaces';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly redisService: RedisService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Auth()
   @Get('me')
@@ -37,23 +30,8 @@ export class AuthController {
 
   @Auth()
   @Post('logout')
-  async logout(@Req() req: Request, @Session() session: IronSession<IronSessionData>): Promise<{ message: string }> {
-    const authType = req.authType;
-
-    if (authType === 'session') {
-      session.destroy();
-      return { message: 'Logged out successfully' };
-    }
-
-    const jti = req.jti;
-    if (!jti) throw new BadRequestException({ status: HttpStatus.BAD_REQUEST, message: 'No JTI found in request' });
-
-    const token = req.headers.authorization?.substring(7) || '';
-    const payload = await this.jwtService.verifyAsync(token, { secret: envs.jwt.secret });
-    const ttl = payload.exp - payload.iat;
-    await this.redisService.blacklistToken(jti, ttl);
-
-    return { message: 'Logged out successfully' };
+  logout(@Req() req: Request, @Session() session: IronSession<IronSessionData>): Promise<{ message: string }> {
+    return this.authService.logout(req, session);
   }
 
   @Post('register')

@@ -1,9 +1,11 @@
-import { HttpStatus, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
+import { Request } from 'express';
 import { IronSession, IronSessionData } from 'iron-session';
 import { envs } from 'src/config';
 import { ExceptionHandler } from '../common';
+import { RedisService } from '../redis';
 import { CreateUserDto, UserModel, UserService } from '../user';
 import { LoginDto } from './dtos';
 import { AuthResponse } from './interfaces';
@@ -15,6 +17,7 @@ export class AuthService {
   constructor(
     readonly _user: UserService,
     private readonly _jwt: JwtService,
+    private readonly _redis: RedisService,
   ) {}
 
   async login({ username, password }: LoginDto, session: IronSession<IronSessionData>): Promise<AuthResponse> {
@@ -70,5 +73,24 @@ export class AuthService {
   private async setUserSession(session: IronSession<IronSessionData>, user: UserModel): Promise<void> {
     session.user = user;
     return await session.save();
+  }
+
+  async logout(req: Request, session: IronSession<IronSessionData>): Promise<{ message: string }> {
+    const authType = req.authType;
+
+    if (authType === 'session') {
+      session.destroy();
+      return { message: 'Logged out successfully' };
+    }
+
+    const jti = req.jti;
+    if (!jti) throw new BadRequestException({ status: HttpStatus.BAD_REQUEST, message: 'No JTI found in request' });
+
+    const token = req.headers.authorization?.substring(7) || '';
+    const payload = await this._jwt.verifyAsync(token, { secret: envs.jwt.secret });
+    const ttl = payload.exp - payload.iat;
+    await this._redis.blacklistToken(jti, ttl);
+
+    return { message: 'Logged out successfully' };
   }
 }
