@@ -1,7 +1,7 @@
 # NestJS GraphQL API Makefile
 # Simplified commands for running the project
 
-.PHONY: help dev debug prod docker-build docker-run docker-run-prod docker-stop docker-logs docker-logs-prod
+.PHONY: help dev debug prod docker-build docker-build-image docker-run docker-run-prod docker-stop docker-clean docker-logs docker-logs-prod db-migrate db-seed db-setup
 
 # Default target
 help: ## Show this help message
@@ -19,27 +19,33 @@ prod: ## Start the application in production mode
 	pnpm run start:prod
 
 # Docker Commands
-docker-build: ## Build Docker images with version from package.json
+docker-build: ## Build docker images via compose.build.yml (versioned + latest tags)
 	@echo "Building Docker images..."
-	@APP_VERSION=$$(node -p "require('./package.json').version.replace(/[^A-Za-z0-9_.-]/g,'-')") docker-compose -f compose.build.yml build
+	@APP_VERSION=$$(node -p "require('./package.json').version.replace(/[^A-Za-z0-9_.-]/g,'-')") docker compose -f compose.build.yml build
 
-docker-run: ## Run the application with Docker Compose (development)
-	docker-compose -f compose.yml up -d
+docker-build-image: ## Build production image directly from dockerfile.prod as drglasdou/rest_api:latest
+	docker build -f dockerfile.prod -t drglasdou/rest_api:latest .
 
-docker-run-prod: ## Run the application with Docker Compose (production)
-	docker-compose -f compose.yml -f compose.prod.yml up -d
+docker-run-infra: ## Start infra only (postgres, redis) — for local dev
+	docker compose -f compose.yml up -d
 
-docker-stop: ## Stop all Docker containers
-	docker-compose -f compose.yml -f compose.prod.yml down -v
+docker-run: ## Start all services (app + postgres + redis) using compose.prod.yml
+	docker compose -f compose.yml -f compose.prod.yml up -d
 
-docker-clean: ## Clean up Docker resources (containers, networks, volumes)
-	docker-compose -f compose.yml -f compose.prod.yml down -v --rmi local --remove-orphans
+docker-run-prod: ## Start all services (app + postgres + redis) using compose.prod.yml
+	docker compose -f compose.yml -f compose.prod.yml up -d
 
-docker-logs: ## Show Docker container logs (development)
-	docker-compose -f compose.yml logs -f
+docker-stop: ## Stop all containers (preserves volumes/data)
+	docker compose -f compose.yml -f compose.prod.yml down
 
-docker-logs-prod: ## Show production Docker container logs
-	docker-compose -f compose.yml -f compose.prod.yml logs -f
+docker-clean: ## Destroy containers + volumes + local images (caution: data loss)
+	docker compose -f compose.yml -f compose.prod.yml down -v --rmi local --remove-orphans
+
+docker-logs: ## Follow logs for infra containers
+	docker compose -f compose.yml logs -f
+
+docker-logs-prod: ## Follow logs for all services (app + infra)
+	docker compose -f compose.yml -f compose.prod.yml logs -f
 
 db-migrate: ## Run database migrations
 	pnpm prisma migrate dev
