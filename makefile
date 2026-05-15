@@ -1,33 +1,42 @@
-# NestJS GraphQL API Makefile
-# Simplified commands for running the project
+.PHONY: help install dev debug prod docker-build docker-build-image docker-run docker-run-prod docker-stop docker-clean docker-logs docker-logs-prod db-migrate db-seed db-setup setup
 
-.PHONY: help dev debug prod docker-build docker-build-image docker-run docker-run-prod docker-stop docker-clean docker-logs docker-logs-prod db-migrate db-seed db-setup setup
+.DEFAULT_GOAL := help
 
-# Default target
-help: ## Show this help message
-	@echo "Available commands:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
+PNPM := pnpm
+PNPX := pnpx
 
-# Development Commands
+##@ General
+help: ## Show this help
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+##@ Setup
+setup: ## Clean install (remove node_modules + lock file + reinstall)
+	@echo "⚠️  This will delete node_modules and pnpm-lock.yaml and reinstall all dependencies"
+	@sleep 3
+	rm -rf node_modules pnpm-lock.yaml
+	$(PNPM) install
+	$(PNPM) prisma generate
+
+install: ## Install dependencies
+	$(PNPM) install
+
+##@ Development
 dev: ## Start the application in development mode with watch
-	pnpm run start:dev
+	$(PNPM) run start:dev
 
 debug: ## Start the application in debug mode
-	pnpm run start:debug
+	$(PNPM) run start:debug
 
 prod: ## Start the application in production mode
-	pnpm run start:prod
+	$(PNPM) run start:prod
 
-# Docker Commands
+##@ Docker
 docker-build: ## Build docker images via compose.build.yml (versioned + latest tags)
 	@echo "Building Docker images..."
 	@APP_VERSION=$$(node -p "require('./package.json').version.replace(/[^A-Za-z0-9_.-]/g,'-')") docker compose -f compose.build.yml build
 
 docker-build-image: ## Build production image directly from dockerfile.prod as drglasdou/rest_api:latest
 	docker build -f dockerfile.prod -t drglasdou/rest_api:latest .
-
-docker-run-infra: ## Start infra only (postgres, redis) — for local dev
-	docker compose -f compose.yml up -d
 
 docker-run: ## Start all services (app + postgres + redis) using compose.prod.yml
 	docker compose -f compose.yml -f compose.prod.yml up -d
@@ -47,19 +56,13 @@ docker-logs: ## Follow logs for infra containers
 docker-logs-prod: ## Follow logs for all services (app + infra)
 	docker compose -f compose.yml -f compose.prod.yml logs -f
 
+##@ Database
 db-migrate: ## Run database migrations
-	pnpm prisma migrate dev
+	$(PNPM) prisma migrate dev
 
 db-seed: ## Seed the database
-	pnpm prisma db seed
+	$(PNPM) prisma db seed
 
 db-setup: ## Set up the database (migrate and seed)
-	pnpm prisma migrate dev
-	pnpm prisma db seed
-
-setup: ## Clean install (remove node_modules + lock file + reinstall)
-	@echo "⚠️  This will delete node_modules and pnpm-lock.yaml and reinstall all dependencies"
-	@sleep 3
-	rm -rf node_modules pnpm-lock.yaml
-	pnpm install
-	pnpm prisma generate
+	$(PNPM) prisma migrate dev
+	$(PNPM) prisma db seed
