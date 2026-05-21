@@ -10,7 +10,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
-    const pool = new Pool({ connectionString: envs.pg.url });
+    const ssl = envs.stage === 'dev' ? undefined : { rejectUnauthorized: false };
+    const pool = new Pool({
+      connectionString: envs.pg.uri,
+      ssl,
+    });
     const adapter = new PrismaPg(pool);
     super({ adapter, log: ['info', 'warn', 'error'] });
   }

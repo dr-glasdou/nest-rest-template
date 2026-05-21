@@ -8,5 +8,5 @@ export default defineConfig({
     path: "./src/prisma/migrations",
     seed: 'tsx src/prisma/seed/index.ts',
   },
-  datasource: {url: envs.pg.url},
+  datasource: {url: envs.pg.uri},
 });
