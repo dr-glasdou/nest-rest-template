@@ -1,10 +1,10 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
-import { AuthModule, HealthModule, SessionMiddleware, UserModule } from './modules';
-import { RedisModule } from './modules/redis/redis.module';
-import { PrismaModule } from './prisma';
+import * as modules from './modules';
+import { SessionMiddleware } from './modules/public';
+import * as services from './services';
 
 @Module({
-  imports: [PrismaModule, RedisModule, AuthModule, HealthModule, UserModule],
+  imports: [services.PrismaModule, services.RedisModule, modules.AuthModule, modules.HealthModule, modules.UserModule],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
-import { envs, redisConfig } from 'src/config';
+import { envs } from 'src/config';
 
 @Injectable()
 export class RedisService implements OnModuleDestroy {
@@ -10,14 +10,14 @@ export class RedisService implements OnModuleDestroy {
   constructor() {
     this.client = new Redis(envs.redis.url, {
       retryStrategy: (times) => {
-        if (times > redisConfig.maxRetries) {
-          this.logger.error(`Failed to connect to Redis after ${redisConfig.maxRetries} retries`);
+        if (times > envs.redis.maxRetries) {
+          this.logger.error(`Failed to connect to Redis after ${envs.redis.maxRetries} retries`);
           return null;
         }
-        this.logger.warn(`Retrying Redis connection (attempt ${times}/${redisConfig.maxRetries})...`);
+        this.logger.warn(`Retrying Redis connection (attempt ${times}/${envs.redis.maxRetries})...`);
         return Math.min(times * 200, 2000);
       },
-      maxRetriesPerRequest: redisConfig.maxRetries,
+      maxRetriesPerRequest: envs.redis.maxRetries,
     });
 
     this.client.on('connect', () => this.logger.log('Connected to Redis'));

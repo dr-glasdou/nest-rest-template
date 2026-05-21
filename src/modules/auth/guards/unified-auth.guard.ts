@@ -3,8 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import { IronSessionData } from 'iron-session';
 
 import { envs } from 'src/config';
-import { RedisService } from 'src/modules/redis';
 import { UserService } from 'src/modules/user';
+import { RedisService } from 'src/redis';
 
 @Injectable()
 export class UnifiedAuthGuard implements CanActivate {

@@ -3,8 +3,8 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 import { envs } from 'src/config';
-import { RedisService } from 'src/modules/redis';
 import { UserService } from 'src/modules/user';
+import { RedisService } from 'src/redis';
 import { JwtPayload } from '../interfaces';
 
 @Injectable()
