@@ -41,4 +41,44 @@ export class RedisService implements OnModuleDestroy {
     const result = await this.client.exists(key);
     return result === 1;
   }
+
+  async ping(): Promise<string> {
+    return await this.client.ping();
+  }
+
+  async get(key: string): Promise<string | null> {
+    return await this.client.get(key);
+  }
+
+  async getJson<T>(key: string): Promise<T | null> {
+    const raw = await this.client.get(key);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return null;
+    }
+  }
+
+  async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
+    if (ttlSeconds) {
+      await this.client.set(key, value, 'EX', ttlSeconds);
+    } else {
+      await this.client.set(key, value);
+    }
+  }
+
+  async setJson(key: string, value: unknown, ttlSeconds?: number): Promise<void> {
+    const raw = JSON.stringify(value);
+    await this.set(key, raw, ttlSeconds);
+  }
+
+  async del(key: string): Promise<void> {
+    await this.client.del(key);
+  }
+
+  async exists(key: string): Promise<boolean> {
+    const result = await this.client.exists(key);
+    return result === 1;
+  }
 }

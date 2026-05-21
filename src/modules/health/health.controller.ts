@@ -1,6 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Post } from '@nestjs/common';
-import { CustomException } from 'src/exceptions';
-import { TestErrorDto } from './dto';
+import { Controller, Get } from '@nestjs/common';
 import { HealthService } from './health.service';
 
 @Controller('health')
@@ -12,21 +10,13 @@ export class HealthController {
     return this.healthService.checkHealth();
   }
 
-  @Get('error')
-  throwError() {
-    throw new CustomException({
-      message: 'This is a custom error message',
-      status: HttpStatus.I_AM_A_TEAPOT,
-    });
-  }
-
-  @Post('error/validation')
-  throwValidationError(@Body() body: TestErrorDto) {
-    return body;
-  }
-
   @Get('db')
   checkDatabaseConnection() {
     return this.healthService.checkDatabaseConnection();
+  }
+
+  @Get('cache')
+  checkCacheConnection() {
+    return this.healthService.checkCacheDbConnection();
   }
 }
