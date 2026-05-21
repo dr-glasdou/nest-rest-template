@@ -21,5 +21,10 @@
         "source.organizeImports.biome": true
       }
     },
-  }
+  },
+  "file_scan_exclusions": [
+    "**/.git",
+    "**/.idea",
+    "**/.agents",
+  ],
 }

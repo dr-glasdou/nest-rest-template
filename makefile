@@ -1,4 +1,4 @@
-.PHONY: help install dev debug prod docker-build docker-build-image docker-run docker-run-prod docker-stop docker-clean docker-logs docker-logs-prod db-migrate db-seed db-setup setup
+.PHONY: help install dev debug prod lint lint-check format format-check lint-fix docker-build docker-build-image docker-run docker-run-prod docker-stop docker-clean docker-logs docker-logs-prod db-migrate db-seed db-setup setup
 
 .DEFAULT_GOAL := help
 
@@ -24,11 +24,30 @@ install: ## Install dependencies
 dev: ## Start the application in development mode with watch
 	$(PNPM) run start:dev
 
+portless: ## Start the application in development mode with watch via portless
+	$(PNPM) run start:portless
+
 debug: ## Start the application in debug mode
 	$(PNPM) run start:debug
 
 prod: ## Start the application in production mode
 	$(PNPM) run start:prod
+
+##@ Lint & Format
+lint: ## Lint and auto-fix code (biome check --write)
+	$(PNPM) run lint
+
+lint-check: ## Check lint without writing
+	$(PNPM) run lint:check
+
+format: ## Format code (biome format --write)
+	$(PNPM) run format
+
+format-check: ## Check format without writing
+	$(PNPM) run format:check
+
+lint-fix: ## Lint + format in one pass
+	$(PNPM) run lint:fix
 
 ##@ Docker
 docker-build: ## Build docker images via compose.build.yml (versioned + latest tags)
@@ -39,7 +58,7 @@ docker-build-image: ## Build production image directly from dockerfile.prod as d
 	docker build -f dockerfile.prod -t drglasdou/rest_api:latest .
 
 docker-run: ## Start all services (app + postgres + redis) using compose.prod.yml
-	docker compose -f compose.yml -f compose.prod.yml up -d
+	docker compose -f compose.yml up -d
 
 docker-run-prod: ## Start all services (app + postgres + redis) using compose.prod.yml
 	docker compose -f compose.yml -f compose.prod.yml up -d

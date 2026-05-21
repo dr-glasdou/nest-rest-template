@@ -3,16 +3,22 @@ FROM node:24-alpine AS builder
 
 WORKDIR /usr/src/app
 
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN corepack enable && corepack prepare pnpm@11 --activate
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
 COPY . .
 
+# Added dummy values to the env, because of the nest build behaviour
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     PRISMA_CLI_BINARY_TARGETS="linux-musl-arm64-openssl-3.0.x,linux-musl-openssl-3.0.x" \
+    PG_USER=build \
+    PG_PASSWORD=build \
+    PG_DB=build \
+    PG_HOST=1 \
+    PG_PORT=1 \
     pnpm prisma generate && \
     pnpm run build && \
     find ./src/prisma/generated -type f -name "*.node" ! -name "*linux-musl*" -delete 2>/dev/null || true
@@ -22,7 +28,7 @@ FROM node:24-alpine AS deps
 
 WORKDIR /usr/src/app
 
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN corepack enable && corepack prepare pnpm@11 --activate
 
 COPY package.json pnpm-lock.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
@@ -36,20 +42,22 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     find ./node_modules -type f \( -name "*.md" -o -name "*.map" -o -name "CHANGELOG*" -o -name "README*" -o -name "LICENSE*" -o -name "LICENCE*" -o -name "*.test.*" -o -name "*.spec.*" \) -delete && \
     find ./node_modules -type d \( -name "__tests__" -o -name "example" -o -name "examples" -o -name "benchmark" -o -name "benchmarks" -o -name "docs" -o -name "doc" -o -name ".github" -o -name ".circleci" \) -exec rm -rf {} + 2>/dev/null || true
 
+# Fetch CA certificates for SSL verification
+FROM debian:12-slim AS certs
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+
 # Final production image
 FROM gcr.io/distroless/nodejs24-debian12:nonroot AS production
-
 WORKDIR /usr/src/app
-
+COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=deps    --chown=nonroot:nonroot /usr/src/app/node_modules        ./node_modules
 COPY --from=builder --chown=nonroot:nonroot /usr/src/app/dist                ./dist
 COPY --from=builder --chown=nonroot:nonroot /usr/src/app/package.json        ./package.json
 COPY --from=builder --chown=nonroot:nonroot /usr/src/app/src/prisma          ./src/prisma
-
 ENV NODE_ENV=production \
     PORT=4000 \
-    TZ=America/Guatemala
-
+    TZ=America/Guatemala \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    NODE_OPTIONS=--use-system-ca
 EXPOSE 4000
-
 CMD ["dist/main.js"]
