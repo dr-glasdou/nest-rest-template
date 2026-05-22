@@ -1,4 +1,9 @@
-.PHONY: help install dev debug prod lint lint-check format format-check lint-fix docker-build docker-build-image docker-run docker-run-prod docker-stop docker-clean docker-logs docker-logs-prod db-migrate db-seed db-setup setup
+# NestJS GraphQL API Makefile
+
+.PHONY: help init setup install dev debug prod \
+	docker-build docker-build-image docker-run docker-run-prod \
+	docker-stop docker-clean docker-logs docker-logs-prod \
+	db-migrate db-seed db-setup check lint format typecheck sync ci clean
 
 .DEFAULT_GOAL := help
 
@@ -20,47 +25,53 @@ setup: ## Clean install (remove node_modules + lock file + reinstall)
 install: ## Install dependencies
 	$(PNPM) install
 
+init: ## Initialize project (install, copy env, start docker, run migrations, seed)
+	@echo "\n📋 Initializing project..."
+	@echo "\n📄 Copying .env.example to .env..."
+	cp -n .env.example .env 2>/dev/null || true
+	@echo "\n📦 Installing dependencies..."
+	$(MAKE) install
+	@echo "\n🐳 Starting Docker services..."
+	$(MAKE) docker-run
+	@echo "\n🗄️  Running database setup..."
+	$(MAKE) db-setup
+	@echo "\n✅ Project initialized!"
+
+lefthook: ## Install git hooks
+	$(PNPX) lefthook install
+
 ##@ Development
-dev: ## Start the application in development mode with watch
+dev: ## Start application in development mode with watch
 	$(PNPM) run start:dev
 
-portless: ## Start the application in development mode with watch via portless
+portless: ## Start application in development using portless mode
 	$(PNPM) run start:portless
 
-debug: ## Start the application in debug mode
+debug: ## Start application in debug mode
 	$(PNPM) run start:debug
 
-prod: ## Start the application in production mode
+##@ Build
+build: ## Build for production
+	$(PNPM) build
+
+prod: ## Start application in production mode
 	$(PNPM) run start:prod
 
-##@ Lint & Format
-lint: ## Lint and auto-fix code (biome check --write)
-	$(PNPM) run lint
-
-lint-check: ## Check lint without writing
-	$(PNPM) run lint:check
-
-format: ## Format code (biome format --write)
-	$(PNPM) run format
-
-format-check: ## Check format without writing
-	$(PNPM) run format:check
-
-lint-fix: ## Lint + format in one pass
-	$(PNPM) run lint:fix
+preview: ## Preview production build
+	$(PNPM) run start:prod
 
 ##@ Docker
 docker-build: ## Build docker images via compose.build.yml (versioned + latest tags)
 	@echo "Building Docker images..."
 	@APP_VERSION=$$(node -p "require('./package.json').version.replace(/[^A-Za-z0-9_.-]/g,'-')") docker compose -f compose.build.yml build
 
-docker-build-image: ## Build production image directly from dockerfile.prod as drglasdou/rest_api:latest
-	docker build -f dockerfile.prod -t drglasdou/rest_api:latest .
+docker-build-image: ## Build production image as drglasdou/nest-gql.glasdou:latest
+	docker build -f dockerfile.prod -t drglasdou/nest-gql.glasdou:latest .
 
-docker-run: ## Start all services (app + postgres + redis) using compose.prod.yml
+docker-run: ## Start all services (postgres + redis)
 	docker compose -f compose.yml up -d
 
-docker-run-prod: ## Start all services (app + postgres + redis) using compose.prod.yml
+docker-run-prod: ## Start all services using compose.prod.yml
 	docker compose -f compose.yml -f compose.prod.yml up -d
 
 docker-stop: ## Stop all containers (preserves volumes/data)
@@ -82,6 +93,18 @@ db-migrate: ## Run database migrations
 db-seed: ## Seed the database
 	$(PNPM) prisma db seed
 
-db-setup: ## Set up the database (migrate and seed)
-	$(PNPM) prisma migrate dev
-	$(PNPM) prisma db seed
+db-setup: ## Set up database (migrate and seed)
+	$(PNPM) prisma migrate dev && $(PNPM) prisma db seed
+
+##@ Code Quality
+code-check: ## Run all code quality checks
+	$(PNPM) run format:check
+	$(PNPM) run lint:check
+
+code-format: ## Run all code formatting checks
+	$(PNPM) run format
+	$(PNPM) run lint
+
+##@ Cleanup
+clean: ## Remove build artifacts
+	rm -rf dist/ .nest/
