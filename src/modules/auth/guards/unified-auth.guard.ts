@@ -4,7 +4,7 @@ import { IronSessionData } from 'iron-session';
 
 import { envs } from 'src/config';
 import { UserService } from 'src/modules/user';
-import { RedisService } from 'src/redis';
+import { RedisService } from 'src/services/redis';
 
 @Injectable()
 export class UnifiedAuthGuard implements CanActivate {

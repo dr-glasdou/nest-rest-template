@@ -4,7 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 
 import { envs } from 'src/config';
 import { UserService } from 'src/modules/user';
-import { RedisService } from 'src/redis';
+import { RedisService } from 'src/services/redis';
 import { JwtPayload } from '../interfaces';
 
 @Injectable()

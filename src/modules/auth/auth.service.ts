@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 import { Request } from 'express';
 import { IronSession, IronSessionData } from 'iron-session';
 import { envs } from 'src/config';
-import { RedisService } from 'src/redis';
+import { RedisService } from 'src/services/redis';
 import { ExceptionHandler } from '../common';
 import { CreateUserDto, UserModel, UserService } from '../user';
 import { LoginDto } from './dtos';

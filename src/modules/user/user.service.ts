@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { User } from 'prisma/client';
-import { PrismaService } from 'src/prisma';
+import { PrismaService } from 'src/services/prisma';
 
 import { ExceptionHandler, ObjectManipulator, PaginationDto, PaginationResponse } from '../common';
 import { USER_FIELDS_TO_OMIT } from './config';

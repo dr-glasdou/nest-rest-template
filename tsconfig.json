@@ -20,10 +20,10 @@
     "noFallthroughCasesInSwitch": false,
     "paths": {
       "prisma": [
-        "./src/prisma/generated"
+        "./src/services/prisma/generated"
       ],
       "prisma/*": [
-        "./src/prisma/generated/*"
+        "./src/services/prisma/generated/*"
       ]
     },
     "typeRoots": [

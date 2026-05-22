@@ -1,6 +1,5 @@
 import { HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { PrismaService } from 'src/prisma';
-import { RedisService } from 'src/redis';
+import { PrismaService, RedisService } from 'src/services/public';
 
 @Injectable()
 export class HealthService {

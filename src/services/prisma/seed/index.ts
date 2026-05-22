@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
 
 import { PrismaClient } from 'prisma/client';
-import { envs } from '../../config/';
+import { envs } from '../../../config/';
 import { users } from './users.seed';
 
 const pool = new Pool({ connectionString: envs.pg.uri });
