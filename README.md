@@ -22,46 +22,49 @@ make db-seed
 
 # 6. Start dev server
 make dev
+# or with portless tunnel
+make portless
 ```
 
-Server runs at `http://localhost:4000/api/v1/health`.
+### Or with make command
+
+```bash
+# 1. Initialize (install, copy env, start docker, run migrations, seed)
+make init
+
+# 2. Start dev server
+make dev
+# or with portless tunnel
+make portless
+```
+
+> Server runs at: `http://localhost:4000/api/v1/health`
+
+> Or with `make portless`: `https://nest-rest.glasdou.localhost/api/v1/health`
 
 ## Env vars
 
 See `.env.example` for all required vars. Key ones: `SESSION_SECRET` and `JWT_SECRET` must be ≥32 chars.
 
-## Scripts
+## Portless (tunnel)
 
-| Command | Action |
-|---------|--------|
-| `make dev` | Dev server (hot reload) |
-| `make debug` | Dev server (debug mode) |
-| `make prod` | Production mode |
-| `make install` | Install dependencies |
-| `make setup` | Clean reinstall + prisma generate |
-| `make lint` | Lint & auto-fix (biome check --write) |
-| `make lint-check` | Check lint (read-only) |
-| `make format` | Format code (biome format --write) |
-| `make format-check` | Check format (read-only) |
-| `make lint-fix` | Lint + format in one pass |
-| `make docker-run` | Start PostgreSQL + Redis |
-| `make docker-run-prod` | Start full stack (app + db + redis) |
-| `make docker-stop` | Stop all containers |
-| `make docker-clean` | Destroy containers + volumes |
-| `make docker-logs` | Follow infra logs |
-| `make db-migrate` | Run migrations |
-| `make db-seed` | Seed database |
-| `make db-setup` | Migrate + seed |
+Portless replaces port number with named subdomain of localhost.
+Official docs: [portless.sh](https://portless.sh/)
 
-Underlying pnpm scripts: `pnpm run build`, `pnpm run lint`, `pnpm run lint:fix`, `pnpm run format`, `pnpm run test`, `pnpm run test:e2e`, `pnpm run prisma:studio`.
+Configuration in `package.json`:
+```json
+"portless": {
+  "name": "nest-rest.glasdou"
+}
+```
 
 ## Stack
 
-- NestJS 11
-- TypeScript 6
-- Prisma 7.8 (adapter-pg)
-- PostgreSQL 17
-- Redis 7
-- Biome
-- Lefthook
-- Commitlint.
+- [NestJS 11](https://nestjs.com)
+- [TypeScript 6](https://www.typescriptlang.org)
+- [Prisma 7.8 (adapter-pg)](https://www.prisma.io)
+- [PostgreSQL 17](https://www.postgresql.org)
+- [Redis 7](https://redis.io)
+- [Biome](https://biomejs.dev)
+- [Lefthook](https://github.com/evilmartians/lefthook)
+- [Commitlint](https://commitlint.js.org)
