@@ -1,10 +1,10 @@
 services:
-  rest_api_pg:
-    container_name: rest_api_pg
-    image: postgres:17.6
+  dr_rest_pg:
+    container_name: dr_rest_pg
+    image: postgres:18-alpine
     restart: always
     volumes:
-      - rest_pg_data:/var/lib/postgresql/data
+      - dr_rest_pg_data:/var/lib/postgresql
     env_file:
       - .env
     environment:
@@ -14,23 +14,23 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - rest_api_network
+      - dr_rest_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${PG_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  rest_api_redis:
-    container_name: rest_api_redis
+  dr_rest_redis:
+    container_name: dr_rest_redis
     image: redis:7-alpine
     restart: always
     volumes:
-      - rest_redis_data:/data
+      - dr_rest_redis_data:/data
     ports:
       - "6379:6379"
     networks:
-      - rest_api_network
+      - dr_rest_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -38,9 +38,9 @@ services:
       retries: 5
 
 volumes:
-  rest_pg_data:
-  rest_redis_data:
+  dr_rest_pg_data:
+  dr_rest_redis_data:
 
 networks:
-  rest_api_network:
+  dr_rest_network:
     driver: bridge
