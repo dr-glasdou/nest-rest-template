@@ -1,0 +1,63 @@
+{
+  "name": "auth",
+  "version": "0.0.1",
+  "private": true,
+  "description": "NestJS API starter (Bun + Zod + Scalar)",
+  "license": "UNLICENSED",
+  "author": "",
+  "type": "module",
+  "engines": {
+    "bun": ">=1.2.0"
+  },
+  "packageManager": "bun@1.4.2",
+  "scripts": {
+    "build": "nest build",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:portless": "portless run bun start:dev",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "oxlint --type-aware src/",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "test:debug": "vitest --inspect-brk --no-file-parallelism",
+    "test:e2e": "vitest run --config ./vitest.config.e2e.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "12.2.0",
+    "@nestjs/core": "12.2.0",
+    "@nestjs/platform-express": "12.2.0",
+    "@nestjs/swagger": "12.0.2",
+    "@paralleldrive/cuid2": "3.3.0",
+    "@scalar/nestjs-api-reference": "1.2.30",
+    "nestjs-zod": "5.5.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "12.0.9",
+    "@nestjs/schematics": "12.0.9",
+    "@nestjs/testing": "12.2.0",
+    "@swc/cli": "0.8.1",
+    "@swc/core": "1.16.18",
+    "@types/express": "5.0.6",
+    "@types/node": "26.6.5",
+    "@types/supertest": "7.2.1",
+    "@vitest/coverage-v8": "5.0.5",
+    "oxfmt": "0.74.0",
+    "oxlint": "1.89.0",
+    "oxlint-tsgolint": "7.0.2004",
+    "portless": "0.15.8",
+    "supertest": "7.3.1",
+    "typescript": "6.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  },
+  "portless": {
+    "name": "auth.dri"
+  }
+}
