@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectDrizzle } from '@nestjs/drizzle';
-import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { DatabaseError } from 'pg';
 
 import { constants } from '#config/index.js';
 import { hasher, PaginationDto } from '#modules/common/index.js';
@@ -12,44 +13,51 @@ import { CreateUserDto, PaginatedUsersDto, UpdateUserDto } from './dto/index.js'
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(@InjectDrizzle() private readonly db: NodePgDatabase) {}
 
   async create(dto: CreateUserDto): Promise<PublicUser> {
-    const [user] = await this.db
-      .insert(userTable)
-      .values({ name: dto.name, username: dto.username, password: await hasher.hash(dto.password) })
-      .returning(publicUser);
-    return user;
+    this.logger.debug(`Creating user username=${dto.username}`);
+    try {
+      const [user] = await this.db
+        .insert(userTable)
+        .values({ name: dto.name, username: dto.username, password: await hasher.hash(dto.password) })
+        .returning(publicUser);
+      this.logger.debug(`Created user id=${user.id} username=${user.username}`);
+      return user;
+    } catch (err) {
+      this.rethrowUsernameConflict(err);
+    }
   }
 
   async findAll(query: PaginationDto): Promise<PaginatedUsersDto> {
     const { page, limit, offset } = query;
     const cap = constants.pagination.countCap;
+    const where = isNull(userTable.deletedAt);
+    this.logger.debug(`Listing users page=${page} limit=${limit}`);
 
-    const { rows } = await this.db.execute<{ data: PublicUser[]; count: number }>(sql`
-      SELECT
-        (
-          SELECT coalesce(json_agg(u), '[]'::json)
-          FROM (
-            SELECT ${userTable.id}, ${userTable.name}, ${userTable.username},
-                   ${userTable.createdAt}, ${userTable.updatedAt}, ${userTable.deletedAt}
-            FROM ${userTable}
-            WHERE ${userTable.deletedAt} IS NULL
-            ORDER BY ${userTable.createdAt} DESC, ${userTable.id} DESC
-            LIMIT ${limit} OFFSET ${offset}
-          ) u
-        ) AS data,
-        (
-          SELECT count(*)::int
-          FROM (SELECT 1 FROM ${userTable} WHERE ${userTable.deletedAt} IS NULL LIMIT ${cap + 1}) t
-        ) AS count
-    `);
+    // select(publicUser) maps snake_case columns; raw json_agg does not
+    const [items, countRows] = await Promise.all([
+      this.db
+        .select(publicUser)
+        .from(userTable)
+        .where(where)
+        .orderBy(desc(userTable.createdAt), desc(userTable.id))
+        .limit(limit)
+        .offset(offset),
+      this.db.execute<{ count: number }>(sql`
+        SELECT count(*)::int AS count
+        FROM (SELECT 1 FROM ${userTable} WHERE ${userTable.deletedAt} IS NULL LIMIT ${cap + 1}) t
+      `),
+    ]);
 
-    const { data: items, count } = rows[0];
+    const count = countRows.rows[0].count;
     const isCapped = count > cap;
     const total = Math.min(count, cap);
     const lastPage = Math.max(1, Math.ceil(total / limit));
 
+    this.logger.debug(`Listed users total=${total} page=${page} returned=${items.length}`);
     return {
       data: items,
       meta: { total, isCapped, page, lastPage, hasNext: page < lastPage },
@@ -57,6 +65,7 @@ export class UserService {
   }
 
   async findOne(id: string): Promise<PublicUser> {
+    this.logger.debug(`Finding user id=${id}`);
     const [user] = await this.db
       .select(publicUser)
       .from(userTable)
@@ -64,15 +73,8 @@ export class UserService {
     return this.orThrow(user);
   }
 
-  async findByUsername(username: string): Promise<PublicUser> {
-    const [user] = await this.db
-      .select(publicUser)
-      .from(userTable)
-      .where(and(eq(userTable.username, username), isNull(userTable.deletedAt)));
-    return this.orThrow(user);
-  }
-
   async findCredentials(username: string): Promise<User> {
+    this.logger.debug(`Finding credentials username=${username}`);
     const [user] = await this.db
       .select()
       .from(userTable)
@@ -81,6 +83,7 @@ export class UserService {
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<PublicUser> {
+    this.logger.debug(`Updating user id=${id}`);
     const [user] = await this.db
       .update(userTable)
       .set({ name: dto.name })
@@ -90,6 +93,7 @@ export class UserService {
   }
 
   async remove(id: string): Promise<PublicUser> {
+    this.logger.debug(`Soft-deleting user id=${id}`);
     const [user] = await this.db
       .update(userTable)
       .set({ deletedAt: new Date().toISOString() })
@@ -99,16 +103,38 @@ export class UserService {
   }
 
   async restore(id: string): Promise<PublicUser> {
-    const [user] = await this.db
+    this.logger.debug(`Restoring user id=${id}`);
+    try {
+      const [user] = await this.db
+        .update(userTable)
+        .set({ deletedAt: null })
+        .where(and(eq(userTable.id, id), isNotNull(userTable.deletedAt)))
+        .returning(publicUser);
+      return this.orThrow(user);
+    } catch (err) {
+      this.rethrowUsernameConflict(err);
+    }
+  }
+
+  async updatePasswordHash(id: string, password: string): Promise<void> {
+    this.logger.debug(`Updating password hash id=${id}`);
+    const hashed = await hasher.hash(password);
+    await this.db
       .update(userTable)
-      .set({ deletedAt: null })
-      .where(and(eq(userTable.id, id), isNotNull(userTable.deletedAt)))
-      .returning(publicUser);
-    return this.orThrow(user);
+      .set({ password: hashed })
+      .where(and(eq(userTable.id, id), isNull(userTable.deletedAt)));
   }
 
   private orThrow<T>(row: T | undefined): T {
     if (!row) throw new NotFoundException('User not found');
     return row;
+  }
+
+  private rethrowUsernameConflict(err: unknown): never {
+    const cause = err instanceof Error && err.cause instanceof DatabaseError ? err.cause : err;
+    if (cause instanceof DatabaseError && cause.code === '23505' && cause.constraint === 'user_username_active_uq') {
+      throw new ConflictException('Username already exists');
+    }
+    throw err;
   }
 }
