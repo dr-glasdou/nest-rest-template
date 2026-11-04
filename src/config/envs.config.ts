@@ -17,6 +17,9 @@ const envSchema = z.object({
         .filter(Boolean),
     )
     .pipe(z.array(z.string().min(1)).min(1)),
+  DB_URL: z.string().url(),
+  MAX_POOL: z.coerce.number().int().positive().default(10),
+  DB_TIMEZONE: z.string().default('UTC'),
 });
 
 export type EnvVars = z.infer<typeof envSchema>;
@@ -38,5 +41,10 @@ export const envs = {
     prefix: envVars.API_PREFIX,
     isProd: envVars.STAGE === 'prod',
     trustedOrigins: envVars.TRUSTED_ORIGINS,
+  },
+  db: {
+    url: envVars.DB_URL,
+    maxPool: envVars.MAX_POOL,
+    timezone: envVars.DB_TIMEZONE,
   },
 };

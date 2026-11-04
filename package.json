@@ -6,6 +6,12 @@
   "license": "UNLICENSED",
   "author": "",
   "type": "module",
+  "imports": {
+    "#*": {
+      "types": "./src/*",
+      "default": "./dist/*"
+    }
+  },
   "engines": {
     "bun": ">=1.2.0"
   },
@@ -27,13 +33,18 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts"
   },
   "dependencies": {
+    "@nestjs/authentication": "0.1.2",
     "@nestjs/common": "12.2.0",
     "@nestjs/core": "12.2.0",
+    "@nestjs/drizzle": "0.0.2",
     "@nestjs/platform-express": "12.2.0",
     "@nestjs/swagger": "12.0.2",
     "@paralleldrive/cuid2": "3.3.0",
     "@scalar/nestjs-api-reference": "1.2.30",
+    "argon2": "0.45.2",
+    "drizzle-orm": "1.0.0-rc.5",
     "nestjs-zod": "5.5.0",
+    "pg": "8.23.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "zod": "4.6.7"
@@ -46,8 +57,10 @@
     "@swc/core": "1.16.18",
     "@types/express": "5.0.6",
     "@types/node": "26.6.5",
+    "@types/pg": "8.23.1",
     "@types/supertest": "7.2.1",
     "@vitest/coverage-v8": "5.0.5",
+    "drizzle-kit": "1.0.0-rc.5",
     "oxfmt": "0.74.0",
     "oxlint": "1.89.0",
     "oxlint-tsgolint": "7.0.2004",

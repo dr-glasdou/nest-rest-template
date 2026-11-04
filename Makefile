@@ -1,8 +1,9 @@
-.PHONY: help install setup build dev debug prod lint format format-check test test-watch test-cov test-e2e
+.PHONY: help install setup build dev debug prod lint format format-check test test-watch test-cov test-e2e db-generate db-migrate db-push db-studio db-check
 
 .DEFAULT_GOAL := help
 
 BUN := bun
+DRIZZLE := $(BUN) x drizzle-kit
 
 ##@ General
 help: ## Show this help
@@ -34,6 +35,21 @@ debug: ## Start the application in debug mode
 prod: ## Start the application in production mode
 	$(BUN) run start:prod
 
+##@ Database
+db-generate: ## Generate SQL migrations from schema
+	$(DRIZZLE) generate
+
+db-migrate: ## Apply pending migrations
+	$(DRIZZLE) migrate
+
+db-push: ## Push schema to DB (no migration files)
+	$(DRIZZLE) push
+
+db-studio: ## Open Drizzle Studio
+	$(DRIZZLE) studio
+
+db-check: ## Validate migrations vs schema
+	$(DRIZZLE) check
 
 ##@ Lint & Format
 lint: ## Lint code (oxlint)
