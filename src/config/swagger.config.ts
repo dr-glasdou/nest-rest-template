@@ -30,6 +30,7 @@ export const setupDocs = (app: INestApplication) => {
     .addServer('/', 'Current host')
     .addTag('Health', 'Liveness probes for orchestration and uptime checks')
     .addTag('User', 'User identity CRUD. Passwords are hashed; responses never include the hash. Soft-deleted rows are excluded from reads/updates.')
+    .addTag('Auth', 'Session cookie auth. Sign-up/sign-in set the session; me/sign-out require it.')
     .build();
 
   const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config));

@@ -4,6 +4,9 @@ import { z } from 'zod';
 
 loadEnvFile();
 
+/** Matches `@nestjs/authentication` Duration strings: `15m`, `3d`, `1w`, … */
+const duration = z.templateLiteral([z.number(), z.enum(['ms', 's', 'm', 'h', 'd', 'w'])]);
+
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   STAGE: z.enum(['dev', 'prod', 'staging']).default('dev'),
@@ -17,9 +20,11 @@ const envSchema = z.object({
         .filter(Boolean),
     )
     .pipe(z.array(z.string().min(1)).min(1)),
-  DB_URL: z.string().url(),
+  DB_URL: z.url(),
   MAX_POOL: z.coerce.number().int().positive().default(10),
   DB_TIMEZONE: z.string().default('UTC'),
+  AUTH_SESSION_ABSOLUTE_TTL: duration,
+  AUTH_SESSION_IDLE_TTL: duration,
 });
 
 export type EnvVars = z.infer<typeof envSchema>;
@@ -46,5 +51,11 @@ export const envs = {
     url: envVars.DB_URL,
     maxPool: envVars.MAX_POOL,
     timezone: envVars.DB_TIMEZONE,
+  },
+  auth: {
+    session: {
+      absoluteTtl: envVars.AUTH_SESSION_ABSOLUTE_TTL,
+      idleTtl: envVars.AUTH_SESSION_IDLE_TTL,
+    },
   },
 };
