@@ -36,8 +36,8 @@ prod: ## Start the application in production mode
 	$(BUN) run start:prod
 
 ##@ Database
-db-generate: ## Generate SQL migrations from schema
-	$(DRIZZLE) generate
+db-generate: ## Generate SQL migrations from schema (optional: name=auth)
+	$(DRIZZLE) generate $(if $(name),--name $(name),)
 
 db-migrate: ## Apply pending migrations
 	$(DRIZZLE) migrate
