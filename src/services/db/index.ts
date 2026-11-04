@@ -1,2 +1,2 @@
-export * from './tables/auth.tables.js';
-export * from './tables/shared.js';
+export * from './tables/index.js';
+export * from './relations.js';

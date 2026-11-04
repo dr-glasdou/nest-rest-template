@@ -2,7 +2,7 @@
   "type": "base",
   "version": "9",
   "dialect": "postgres",
-  "id": "5ba09a19-3279-49d1-bc60-6ffa46007a11",
+  "id": "39e335b4-50c7-48e6-b429-d0fad5416481",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -20,11 +20,30 @@
         "e|tbl|public.user",
         "n|rel|public.user",
         "n|type|public.user",
-        "n|rel|public.user_pkey",
-        "n|rel|public.user_username_key"
+        "n|rel|public.user_pkey"
       ],
       "reads": [
         "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "user",
+        "user_username_active_uq"
+      ],
+      "writes": [
+        "s|idx|public.user_username_active_uq",
+        "n|idx|public.user_username_active_uq",
+        "e|idx|public.user_username_active_uq",
+        "n|rel|public.user_username_active_uq"
+      ],
+      "reads": [
+        "n|tbl|public.user",
+        "n|sch|public",
+        "n|col|public.user.username"
       ]
     }
   ],
@@ -129,23 +148,33 @@
     {
       "schema": "public",
       "table": "user",
+      "name": "user_username_active_uq",
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "username",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"deleted_at\" is null",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "entityType": "indexes"
+    },
+    {
+      "schema": "public",
+      "table": "user",
       "name": "user_pkey",
       "columns": [
         "id"
       ],
       "nameExplicit": false,
       "entityType": "pks"
-    },
-    {
-      "schema": "public",
-      "table": "user",
-      "name": "user_username_key",
-      "nameExplicit": false,
-      "columns": [
-        "username"
-      ],
-      "nullsNotDistinct": false,
-      "entityType": "uniques"
     }
   ]
 }

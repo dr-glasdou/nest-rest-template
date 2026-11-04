@@ -4,6 +4,8 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 
 import { envs } from '#config/index.js';
 
+import { relations } from './relations.js';
+
 @Module({
   imports: [
     DrizzleModule.forRoot({
@@ -13,6 +15,7 @@ import { envs } from '#config/index.js';
         max: envs.db.maxPool,
         options: `-c timezone=${envs.db.timezone}`,
       },
+      relations,
       logger: envs.app.stage === 'dev',
     }),
   ],
