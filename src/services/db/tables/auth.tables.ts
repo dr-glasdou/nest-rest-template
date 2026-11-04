@@ -67,3 +67,27 @@ export const sessionTable = snakeCase.table(
   },
   (table) => [index('sessions_user_id_idx').on(table.userId), index('sessions_expires_at_idx').on(table.expiresAt)],
 );
+
+export const apiKeyTable = snakeCase.table(
+  'api_key',
+  {
+    // ApiKeyProvider public id: 16 hex chars from generate(), not cuid
+    id: text().primaryKey(),
+    userId: text()
+      .notNull()
+      .references(() => userTable.id),
+    name: text().notNull(),
+    description: text(),
+    hash: text().notNull(),
+    createdAt: at().notNull(),
+    expiresAt: at(),
+  },
+  (table) => [index('api_keys_user_id_idx').on(table.userId)],
+);
+export const createApiKeySchema = createInsertSchema(apiKeyTable)
+  .pick({ name: true, description: true, expiresAt: true })
+  .extend({
+    name: nameSchema,
+    description: z.string().min(3).max(200).optional(),
+    expiresAt: z.iso.datetime().optional(),
+  });
