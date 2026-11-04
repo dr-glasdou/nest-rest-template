@@ -25,6 +25,7 @@ const envSchema = z.object({
   DB_TIMEZONE: z.string().default('UTC'),
   AUTH_SESSION_ABSOLUTE_TTL: duration,
   AUTH_SESSION_IDLE_TTL: duration,
+  API_KEY_PREFIX: z.string().min(2),
 });
 
 export type EnvVars = z.infer<typeof envSchema>;
@@ -56,6 +57,9 @@ export const envs = {
     session: {
       absoluteTtl: envVars.AUTH_SESSION_ABSOLUTE_TTL,
       idleTtl: envVars.AUTH_SESSION_IDLE_TTL,
+    },
+    apiKey: {
+      prefix: envVars.API_KEY_PREFIX,
     },
   },
 };
