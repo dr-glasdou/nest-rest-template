@@ -40,4 +40,38 @@ describe('auth session smoke', () => {
       }),
     );
   });
+
+  it('sign-up → create api key → /me with bearer only', async () => {
+    const username = `e2e${Date.now().toString(36)}`;
+    const password = 'TestPass1!';
+    const fresh = request.agent(app.getHttpServer());
+
+    await fresh
+      .post('/api/v1/auth/sign-up')
+      .send({ name: 'E2E User', username, password })
+      .expect(201)
+      .expect((res) => {
+        expect(res.body).toMatchObject({ username, name: 'E2E User' });
+      });
+
+    const created = await fresh
+      .post('/api/v1/auth/api-key')
+      .send({ name: 'e2e-key', description: 'e2e regression' })
+      .expect(201);
+
+    expect(created.body).toEqual(
+      expect.objectContaining({
+        id: expect.stringMatching(/^[0-9a-f]{16}$/),
+        key: expect.stringMatching(/^dr_[0-9a-f]{16}_[A-Za-z0-9_-]{43}$/),
+        name: 'e2e-key',
+      }),
+    );
+    expect(created.body.key).toContain(created.body.id);
+
+    const me = await request(app.getHttpServer())
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${created.body.key}`)
+      .expect(200);
+    expect(me.body).toMatchObject({ username });
+  });
 });
