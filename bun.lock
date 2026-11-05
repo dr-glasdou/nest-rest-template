@@ -6,6 +6,7 @@
       "name": "auth",
       "dependencies": {
         "@nestjs/authentication": "0.1.2",
+        "@nestjs/authorization": "^0.1.2",
         "@nestjs/common": "12.2.0",
         "@nestjs/core": "12.2.0",
         "@nestjs/drizzle": "0.0.2",
@@ -148,6 +149,8 @@
     "@napi-rs/nice-win32-x64-msvc": ["@napi-rs/nice-win32-x64-msvc@1.1.1", "", { "os": "win32", "cpu": "x64" }, "sha512-vB+4G/jBQCAh0jelMTY3+kgFy00Hlx2f2/1zjMoH821IbplbWZOkLiTYXQkygNTzQJTq5cvwBDgn2ppHD+bglQ=="],
 
     "@nestjs/authentication": ["@nestjs/authentication@0.1.2", "", { "peerDependencies": { "@nestjs/common": "^12.0.0", "@nestjs/core": "^12.0.0", "@nestjs/microservices": "^12.0.0", "@nestjs/websockets": "^12.0.0", "reflect-metadata": "^0.1.13 || ^0.2.0", "rxjs": "^7.1.0" }, "optionalPeers": ["@nestjs/microservices", "@nestjs/websockets"] }, "sha512-cJUBJURsYge7s5zcx6k+j81B28oLwUOTUZVRD9OsVC/+GG3KEiDX0ojpHOUH909g0+ueNl+80ZByEq0FZs2bYQ=="],
+
+    "@nestjs/authorization": ["@nestjs/authorization@0.1.2", "", { "peerDependencies": { "@nestjs/authentication": ">=0.1.0", "@nestjs/common": "^12.0.0", "@nestjs/core": "^12.0.0", "@nestjs/microservices": "^12.0.0", "@nestjs/websockets": "^12.0.0", "reflect-metadata": "^0.1.13 || ^0.2.0", "rxjs": "^7.1.0" }, "optionalPeers": ["@nestjs/authentication", "@nestjs/microservices", "@nestjs/websockets"] }, "sha512-60Sldv9eCcDbfwCep+tZJb4HaMmEihsFKKejYLiwtw0rWZiLxjQzdgz7QVmOVi5vBbsVUZHBgm/Cftoz6m18nQ=="],
 
     "@nestjs/cli": ["@nestjs/cli@12.0.9", "", { "dependencies": { "@angular-devkit/core": "22.2.3", "@angular-devkit/schematics": "22.2.3", "@angular-devkit/schematics-cli": "22.2.3", "@inquirer/prompts": "8.7.3", "@nestjs/schematics": "^12.0.0", "ansis": "4.4.0", "chokidar": "5.0.0", "cli-table3": "0.6.5", "commander": "15.0.0", "jsonc-parser": "3.3.1", "minimatch": "10.2.6", "node-emoji": "2.2.0", "ora": "9.4.1", "tsconfig-paths": "4.2.0", "typescript": "~6.0.2" }, "peerDependencies": { "@rspack/core": "^1.7.7 || ^2.1.10", "@swc/cli": "^0.8.0", "@swc/core": "^1.15.18", "fork-ts-checker-webpack-plugin": "^9.1.0", "ts-loader": "^9.5.4", "tsconfig-paths-webpack-plugin": "^4.2.0", "webpack": "^5.105.4", "webpack-node-externals": "^3.0.0" }, "optionalPeers": ["@rspack/core", "@swc/cli", "@swc/core", "fork-ts-checker-webpack-plugin", "ts-loader", "tsconfig-paths-webpack-plugin", "webpack", "webpack-node-externals"], "bin": { "nest": "bin/nest.js" } }, "sha512-jny3o6hItqBnWM7gMsxDQKj/DyzQnojcFm0nI5kXvc/3Fl6uvIDbZfXDm42LzgSEptYKxOsYXjBw0u5EHLj5Sg=="],
 

@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@nestjs/authentication": "0.1.2",
+    "@nestjs/authorization": "^0.1.2",
     "@nestjs/common": "12.2.0",
     "@nestjs/core": "12.2.0",
     "@nestjs/drizzle": "0.0.2",
