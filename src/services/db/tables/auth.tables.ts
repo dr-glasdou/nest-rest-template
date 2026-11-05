@@ -91,3 +91,9 @@ export const createApiKeySchema = createInsertSchema(apiKeyTable)
     description: z.string().min(3).max(200).optional(),
     expiresAt: z.iso.datetime().optional(),
   });
+
+/** One-shot flags; insert key once, unique violation = already done. */
+export const SETUP_ADMIN_BOOTSTRAPPED = 'admin_bootstrapped';
+export const setupTable = snakeCase.table('setup', {
+  key: text().primaryKey(),
+});
