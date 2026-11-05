@@ -29,7 +29,12 @@ describe('auth session smoke', () => {
       .expect({ mfaRequired: false });
 
     const me = await agent.get('/api/v1/auth/me').expect(200);
-    expect(me.body).toMatchObject({ username: 'admin' });
+    expect(me.body).toMatchObject({
+      username: 'admin',
+      roles: expect.any(Array),
+      permissions: expect.any(Array),
+      modules: expect.any(Array),
+    });
 
     const list = await agent.get('/api/v1/user').query({ page: 1, limit: 10 }).expect(200);
     expect(list.body.data[0]).toEqual(
@@ -38,6 +43,28 @@ describe('auth session smoke', () => {
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       }),
+    );
+
+    const roles = await agent.get('/api/v1/role').query({ page: 1, limit: 10 }).expect(200);
+    expect(roles.body).toEqual(
+      expect.objectContaining({
+        data: expect.any(Array),
+        meta: expect.objectContaining({ page: 1, total: expect.any(Number), hasNext: expect.any(Boolean) }),
+      }),
+    );
+    expect(roles.body.data[0]).toEqual(
+      expect.objectContaining({ name: expect.any(String), permissions: expect.any(Array) }),
+    );
+
+    const permissions = await agent.get('/api/v1/permission').query({ page: 1, limit: 10 }).expect(200);
+    expect(permissions.body).toEqual(
+      expect.objectContaining({
+        data: expect.any(Array),
+        meta: expect.objectContaining({ page: 1, total: expect.any(Number), hasNext: expect.any(Boolean) }),
+      }),
+    );
+    expect(permissions.body.data[0]).toEqual(
+      expect.objectContaining({ module: expect.any(String), action: expect.any(String) }),
     );
   });
 
@@ -72,6 +99,11 @@ describe('auth session smoke', () => {
       .get('/api/v1/auth/me')
       .set('Authorization', `Bearer ${created.body.key}`)
       .expect(200);
-    expect(me.body).toMatchObject({ username });
+    expect(me.body).toMatchObject({
+      username,
+      roles: expect.any(Array),
+      permissions: expect.any(Array),
+      modules: expect.any(Array),
+    });
   });
 });
