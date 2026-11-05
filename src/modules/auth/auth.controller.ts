@@ -42,6 +42,19 @@ export class AuthController {
   }
 
   @Public()
+  @Post('bootstrap')
+  @ApiOperation({
+    summary: 'Bootstrap admin',
+    description: 'One-shot: creates the first admin user. Subsequent calls return 409.',
+  })
+  @ZodResponse({ status: 201, type: PublicUserDto, description: 'Admin created and signed in' })
+  async bootstrap(@Body({ schema: userSignUpSchema }) body: SignUpDto) {
+    const user = await this.credentialsService.bootstrapAdmin(body);
+    await this.signInService.signIn(user.id, { method: 'password' });
+    return user;
+  }
+
+  @Public()
   @Post('sign-in')
   @ApiOperation({
     summary: 'Sign in',

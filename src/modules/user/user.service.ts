@@ -6,7 +6,7 @@ import { DatabaseError } from 'pg';
 
 import { constants } from '#config/index.js';
 import { hasher, PaginationDto } from '#modules/common/index.js';
-import { PublicUser, User, userTable } from '#services/db/index.js';
+import { PublicUser, SETUP_ADMIN_BOOTSTRAPPED, setupTable, User, userTable } from '#services/db/index.js';
 
 import { publicUser } from './constants/user.constants.js';
 import { CreateUserDto, PaginatedUsersDto, UpdateUserDto } from './dto/index.js';
@@ -27,6 +27,27 @@ export class UserService {
       this.logger.debug(`Created user id=${user.id} username=${user.username}`);
       return user;
     } catch (err) {
+      this.rethrowUsernameConflict(err);
+    }
+  }
+
+  async bootstrapAdmin(dto: CreateUserDto): Promise<PublicUser> {
+    this.logger.debug(`Bootstrapping admin username=${dto.username}`);
+    try {
+      return await this.db.transaction(async (tx) => {
+        await tx.insert(setupTable).values({ key: SETUP_ADMIN_BOOTSTRAPPED });
+        const [user] = await tx
+          .insert(userTable)
+          .values({ name: dto.name, username: dto.username, password: await hasher.hash(dto.password) })
+          .returning(publicUser);
+        this.logger.debug(`Bootstrapped admin id=${user.id} username=${user.username}`);
+        return user;
+      });
+    } catch (err) {
+      const cause = err instanceof Error && err.cause instanceof DatabaseError ? err.cause : err;
+      if (cause instanceof DatabaseError && cause.code === '23505' && cause.constraint === 'setup_pkey') {
+        throw new ConflictException('Admin already bootstrapped');
+      }
       this.rethrowUsernameConflict(err);
     }
   }

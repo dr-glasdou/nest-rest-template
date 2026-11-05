@@ -17,6 +17,13 @@ export class CredentialsService {
     return user;
   }
 
+  async bootstrapAdmin(dto: SignUpDto) {
+    this.logger.debug(`Bootstrapping admin username=${dto.username}`);
+    const user = await this.userService.bootstrapAdmin(dto);
+    this.logger.debug(`Bootstrapped admin id=${user.id} username=${user.username}`);
+    return user;
+  }
+
   async verify({ username, password }: SignInDto) {
     this.logger.debug(`Verifying credentials username=${username}`);
     const found = await this.userService.findCredentials(username);
