@@ -1,4 +1,5 @@
 import { Authenticate, CurrentUser } from '@nestjs/authentication';
+import { Can } from '@nestjs/authorization';
 import { Body, Controller, Delete, Get, HttpStatus, NotFoundException, Param, Post } from '@nestjs/common';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { and, eq } from 'drizzle-orm';
@@ -10,6 +11,7 @@ import { CreateApiKeyDto } from './dto/index.js';
 import { ApiKeyAuth, SessionAuth } from './providers/index.js';
 
 @Authenticate({ providers: [SessionAuth] })
+@Can.Anyone()
 @Controller('auth/api-key')
 export class ApiKeyController {
   constructor(

@@ -1,4 +1,5 @@
 import { Public } from '@nestjs/authentication';
+import { Can } from '@nestjs/authorization';
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
@@ -6,6 +7,7 @@ import { ZodResponse } from 'nestjs-zod';
 import { ParseCuidPipe, PaginationDto } from '#modules/common/index.js';
 
 import { CreateUserDto, PaginatedUsersDto, PublicUserDto, UpdateUserDto } from './dto/index.js';
+import { UserPolicy } from './user.policy.js';
 import { UserService } from './user.service.js';
 
 @ApiTags('User')
@@ -25,6 +27,7 @@ export class UserController {
   }
 
   @Get()
+  @Can(UserPolicy, 'read')
   @ApiOperation({
     summary: 'List users',
     description: 'Paginated active users only (soft-deleted excluded). Total is capped at countCap.',
@@ -35,6 +38,7 @@ export class UserController {
   }
 
   @Get(':id')
+  @Can(UserPolicy, 'read')
   @ApiOperation({
     summary: 'Get user by id',
     description: 'Returns a public user. Soft-deleted users respond 404.',
@@ -45,6 +49,7 @@ export class UserController {
   }
 
   @Patch(':id')
+  @Can(UserPolicy, 'update')
   @ApiOperation({
     summary: 'Update user',
     description: 'Updates an active user. Soft-deleted users respond 404.',
@@ -55,6 +60,7 @@ export class UserController {
   }
 
   @Delete(':id')
+  @Can(UserPolicy, 'delete')
   @ApiOperation({
     summary: 'Soft-delete user',
     description: 'Sets deletedAt. Already-deleted or missing users respond 404.',
@@ -65,6 +71,7 @@ export class UserController {
   }
 
   @Patch(':id/restore')
+  @Can(UserPolicy, 'restore')
   @ApiOperation({
     summary: 'Restore user',
     description: 'Removes deletedAt. Active users respond 404.',

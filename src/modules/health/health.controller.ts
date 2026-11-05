@@ -1,3 +1,4 @@
+import { Public } from '@nestjs/authentication';
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
@@ -10,6 +11,7 @@ import { HealthService } from './health.service.js';
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
+  @Public()
   @Get()
   @ApiOperation({
     summary: 'Health check',

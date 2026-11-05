@@ -6,7 +6,16 @@ import { DatabaseError } from 'pg';
 
 import { constants } from '#config/index.js';
 import { hasher, PaginationDto } from '#modules/common/index.js';
-import { PublicUser, SETUP_ADMIN_BOOTSTRAPPED, setupTable, User, userTable } from '#services/db/index.js';
+import {
+  ADMIN_ROLE,
+  PublicUser,
+  roleTable,
+  SETUP_ADMIN_BOOTSTRAPPED,
+  setupTable,
+  User,
+  userRoleTable,
+  userTable,
+} from '#services/db/index.js';
 
 import { publicUser } from './constants/user.constants.js';
 import { CreateUserDto, PaginatedUsersDto, UpdateUserDto } from './dto/index.js';
@@ -40,6 +49,9 @@ export class UserService {
           .insert(userTable)
           .values({ name: dto.name, username: dto.username, password: await hasher.hash(dto.password) })
           .returning(publicUser);
+        const [adminRole] = await tx.select().from(roleTable).where(eq(roleTable.name, ADMIN_ROLE));
+        if (!adminRole) throw new NotFoundException(`Role '${ADMIN_ROLE}' not found — seed must run first`);
+        await tx.insert(userRoleTable).values({ userId: user.id, roleId: adminRole.id });
         this.logger.debug(`Bootstrapped admin id=${user.id} username=${user.username}`);
         return user;
       });

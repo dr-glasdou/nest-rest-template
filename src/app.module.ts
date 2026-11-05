@@ -1,4 +1,5 @@
 import { AuthenticationModule } from '@nestjs/authentication';
+import { AuthorizationModule } from '@nestjs/authorization';
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ZodSerializerInterceptor } from 'nestjs-zod';
@@ -10,6 +11,7 @@ import * as services from './services/index.js';
 
 @Module({
   imports: [
+    // Authentication before Authorization — global guards run in import order
     AuthenticationModule.forRoot({
       session: {
         absoluteTtl: envs.auth.session.absoluteTtl,
@@ -19,6 +21,7 @@ import * as services from './services/index.js';
         trustedOrigins: envs.app.trustedOrigins,
       },
     }),
+    AuthorizationModule.forRoot(),
     ...Object.values(modules),
     ...Object.values(services),
   ],

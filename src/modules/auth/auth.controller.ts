@@ -1,4 +1,5 @@
 import { CurrentUser, Public, SignInService } from '@nestjs/authentication';
+import { Can } from '@nestjs/authorization';
 import { Body, Controller, Get, HttpStatus, Logger, Post, UnauthorizedException } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
@@ -6,7 +7,7 @@ import { ZodResponse } from 'nestjs-zod';
 import { PublicUserDto } from '#modules/user/index.js';
 
 import { CredentialsService } from './credentials.service.js';
-import { SignInDto, SignInResponseDto, SignUpDto, userSignInSchema, userSignUpSchema } from './dto/index.js';
+import { MeDto, SignInDto, SignInResponseDto, SignUpDto, userSignInSchema, userSignUpSchema } from './dto/index.js';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -19,12 +20,13 @@ export class AuthController {
   ) {}
 
   @Get('me')
+  @Can.Anyone()
   @ApiOperation({
     summary: 'Current user',
-    description: 'Returns the session user. Requires an active session cookie.',
+    description: 'Returns the principal with roles, permissions, and modules. Session cookie or API key.',
   })
-  @ZodResponse({ status: 200, type: PublicUserDto, description: 'Authenticated user' })
-  me(@CurrentUser() user: PublicUserDto) {
+  @ZodResponse({ status: 200, type: MeDto, description: 'Authenticated principal' })
+  me(@CurrentUser() user: MeDto) {
     return user;
   }
 
@@ -45,7 +47,7 @@ export class AuthController {
   @Post('bootstrap')
   @ApiOperation({
     summary: 'Bootstrap admin',
-    description: 'One-shot: creates the first admin user. Subsequent calls return 409.',
+    description: 'One-shot: creates the first admin user (run POST /rbac/seed first). Subsequent calls return 409.',
   })
   @ZodResponse({ status: 201, type: PublicUserDto, description: 'Admin created and signed in' })
   async bootstrap(@Body({ schema: userSignUpSchema }) body: SignUpDto) {
@@ -70,6 +72,7 @@ export class AuthController {
   }
 
   @Post('sign-out')
+  @Can.Anyone()
   @ApiOperation({
     summary: 'Sign out',
     description: 'Ends the current session. Requires an active session cookie.',
@@ -83,6 +86,7 @@ export class AuthController {
   }
 
   @Post('sign-out-everywhere')
+  @Can.Anyone()
   @ApiOperation({
     summary: 'Sign out everywhere',
     description: 'Revokes all sessions for the current user. Requires an active session cookie.',
