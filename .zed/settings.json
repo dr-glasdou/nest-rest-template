@@ -8,18 +8,18 @@
           "disableNestedConfig": false,
           "fixKind": "safe_fix",
           "typeAware": true,
-          "unusedDisableDirectives": "deny"
-        }
-      }
+          "unusedDisableDirectives": "deny",
+        },
+      },
     },
     "oxfmt": {
       "initialization_options": {
         "settings": {
           "fmt.configPath": null,
-          "run": "onSave"
-        }
-      }
-    }
+          "run": "onSave",
+        },
+      },
+    },
   },
   "languages": {
     "TypeScript": {
@@ -28,9 +28,9 @@
       // "formatter": [{ "language_server": { "name": "oxfmt" } }, { "code_action": "source.fixAll.oxc" }],
       "language_servers": ["!biome", "!angular", "oxfmt", "..."],
       "code_actions_on_format": {
-        "source.fixAll.oxc": true
-      }
-    }
+        "source.fixAll.oxc": true,
+      },
+    },
   },
-  "file_scan_exclusions": ["**/.git", "**/.idea", "**/.agents", "**/dist/", "**/node_modules/", "**/*.tsbuildinfo"]
+  "file_scan_exclusions": ["**/.git", "**/.idea", "**/.agents", "**/dist/", "**/node_modules/", "**/*.tsbuildinfo"],
 }
